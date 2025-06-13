@@ -1,15 +1,6 @@
 
 
 
-**`etl/etl_script.py`**
-```python
-import pandas as pd
-import sqlite3
-import hashlib
-import os
-import time
-
-
 def run_etl():
     start_time = time.time()
     rows_ingested = 0

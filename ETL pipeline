@@ -1,0 +1,58 @@
+def run_etl():
+    start_time = time.time()
+    rows_ingested = 0
+    missing_values_handled_count = 0
+    status = 'FAILURE' # Default status
+
+    try:
+        CSV_PATH = '/app/data/telecom_churn.csv'
+        STAGING_DB_PATH = '/app/databases/staging.db'
+        REPORTING_DB_PATH = '/app/databases/reporting.db'
+
+        # --- 1. Extract ---
+        df_raw = pd.read_csv(CSV_PATH)
+        rows_ingested = len(df_raw)
+        print(f"[{time.ctime()}] Extracted {rows_ingested} rows from CSV.")
+
+
+        # --- 2. Load to Staging ---
+        with sqlite3.connect(STAGING_DB_PATH) as c_staging:
+            df_raw.to_sql('raw_telecom_churn', c_staging, if_exists='replace', index=False)
+            print(f"[{time.ctime()}] Loaded raw data to staging.db (raw_telecom_churn table).")
+
+        # --- 3. Transform ---
+        df_transformed = df_raw.copy()
+
+
+
+        # --- 4. Load to Reporting ---
+        with sqlite3.connect(REPORTING_DB_PATH) as c_reporting:
+            # Create table if not exists, and define schema for processed data
+            c_reporting.execute('''
+                CREATE TABLE IF NOT EXISTS processed_telecom_churn (
+                    customerID_anonymized TEXT PRIMARY KEY,
+                    gender TEXT,
+                    SeniorCitizen INTEGER,
+                    Partner TEXT,
+                    Dependents TEXT,
+                    tenure INTEGER,
+                    PhoneService TEXT,
+                    MultipleLines TEXT,
+                    InternetService TEXT,
+                    OnlineSecurity TEXT,
+                    OnlineBackup TEXT,
+                    DeviceProtection TEXT,
+                    TechSupport TEXT,
+                    StreamingTV TEXT,
+                    StreamingMovies TEXT,
+                    Contract TEXT,
+                    PaperlessBilling TEXT,
+                    PaymentMethod TEXT,
+                    MonthlyCharges REAL,
+                    TotalCharges REAL
+                );
+            ''')
+         
+            df_transformed.to_sql('processed_telecom_churn', c_reporting, if_exists='replace', index=False)
+            rows_processed = len(df_transformed)
+            print(f"[{time.ctime()}] Loaded transformed data to reporting.db (processed_telecom_churn table).")

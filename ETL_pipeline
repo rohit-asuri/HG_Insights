@@ -8,16 +8,14 @@ def run_etl():
     status = 'FAILURE' # Default status
 
     try:
-        # Define paths relative to the container's root
         CSV_PATH = '/app/data/telecom_churn.csv'
         STAGING_DB_PATH = '/app/databases/staging.db'
         REPORTING_DB_PATH = '/app/databases/reporting.db'
 
         # --- 1. Extract ---
-        print(f"Starting ETL process...")
-        if not os.path.exists(CSV_PATH):
-            print(f"Error: CSV file not found at {CSV_PATH}. Please ensure it's in the 'data/' directory.")
-            return
+        df_raw = pd.read_csv(CSV_PATH)
+        rows_ingested = len(df_raw)
+        print(f"[{time.ctime()}] Extracted {rows_ingested} rows from CSV.")
 
 
         # --- 2. Load to Staging ---
